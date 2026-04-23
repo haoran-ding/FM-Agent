@@ -22,6 +22,131 @@ def _split_into_blocks(func):
     return blocks
 
 
+def _compute_brace_depth_per_line(lines):
+    """
+    Compute brace depth after each line, respecting strings and comments.
+    Returns list of depths (depth after processing each line).
+    """
+    depths = []
+    depth = 0
+    for line in lines:
+        i = 0
+        while i < len(line):
+            ch = line[i]
+            # Skip string literals
+            if ch == '"':
+                i += 1
+                while i < len(line):
+                    if line[i] == '\\':
+                        i += 2
+                        continue
+                    if line[i] == '"':
+                        i += 1
+                        break
+                    i += 1
+                continue
+            # Skip char literals
+            if ch == "'":
+                i += 1
+                while i < len(line):
+                    if line[i] == '\\':
+                        i += 2
+                        continue
+                    if line[i] == "'":
+                        i += 1
+                        break
+                    i += 1
+                continue
+            # Line comment — skip rest of line
+            if ch == '/' and i + 1 < len(line) and line[i + 1] == '/':
+                break
+            # Block comment
+            if ch == '/' and i + 1 < len(line) and line[i + 1] == '*':
+                i += 2
+                while i < len(line):
+                    if line[i] == '*' and i + 1 < len(line) and line[i + 1] == '/':
+                        i += 2
+                        break
+                    i += 1
+                # If block comment spans lines, we ignore braces inside it (simplified)
+                continue
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+            i += 1
+        depths.append(depth)
+    return depths
+
+
+def _split_into_blocks_braced(func, language):
+    """
+    Split function body into blocks respecting syntactic boundaries.
+    """
+
+    python_like = {"python"}
+
+    if language.lower() in python_like:
+        return _split_into_blocks(func)
+
+    raw_lines = func.strip().split("\n")
+    total = len(raw_lines)
+
+    if total <= GRANULARITY:
+        return [func.strip()]
+
+    # normalize prefix
+    stripped_lines = []
+    for line in raw_lines:
+        if line.startswith("Line "):
+            colon = line.find(":", 5)
+            if colon != -1:
+                line = line[colon + 1:].lstrip()
+        stripped_lines.append(line)
+
+    # compute brace depth
+    depths = _compute_brace_depth_per_line(stripped_lines)
+
+    # define entry depth 
+    entry_depth = depths[0] if total > 0 else 0
+
+    if entry_depth == 0:
+        entry_depth = next((d for d in depths if d > 0), 0)
+
+    if entry_depth == 0:
+        # fallback to safe splitter
+        return _split_into_blocks(func)
+
+    # greedy safe splitting
+    blocks = []
+    i = 0
+
+    while i < total:
+        remaining = total - i
+
+        if remaining <= GRANULARITY * 2:
+            blocks.append("\n".join(raw_lines[i:]))
+            break
+
+        target = i + GRANULARITY
+        split_point = -1
+
+        # ONLY split when we return to entry depth
+        for j in range(target, total):
+            if depths[j] == entry_depth:
+                split_point = j
+                break
+
+        if split_point == -1:
+            blocks.append("\n".join(raw_lines[i:]))
+            break
+
+        blocks.append("\n".join(raw_lines[i:split_point + 1]))
+        i = split_point + 1
+
+    return blocks
+
+
 _TERMINATING_PATTERNS = {
     "rust": r'\b(return\b|panic!\s*\(|std::process::exit\s*\(|unreachable!\s*\()',
     "c": r'\b(return\b|exit\s*\(|_Exit\s*\(|abort\s*\(|longjmp\s*\()',
@@ -65,7 +190,7 @@ def reasoner(func, spec, info, language):
         return "Failed to parse pre/post conditions from the spec."
 
     # Step 2: Split function into code blocks (each >= GRANULARITY lines)
-    blocks = _split_into_blocks(func)
+    blocks = _split_into_blocks_braced(func, language)
 
     # Step 3: Process each block sequentially
     current_pre = pre_condition
