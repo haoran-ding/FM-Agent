@@ -369,6 +369,30 @@ def _extract_functions_brace(lines, lang_key, lang_cfg):
             if not m:
                 i += 1
                 continue
+            # Skip functions annotated with #[test].
+            # Walk backward through the contiguous run of attribute/blank lines
+            # that immediately precede this fn — stop at the first line that is
+            # neither blank nor an attribute (#[...]) so we never reach a #[test]
+            # that belonged to a different, already-processed function.
+            j = i - 1
+            has_test_attr = False
+            while j >= 0:
+                prev = lines[j].strip()
+                if prev == '' or re.match(r'^#\[', prev) or prev.startswith('//'):
+                    if prev == '#[test]':
+                        has_test_attr = True
+                        break
+                    j -= 1
+                else:
+                    break
+            if has_test_attr:
+                sig_end = i
+                for look in range(i, min(i + 10, len(lines))):
+                    if '{' in lines[look]:
+                        sig_end = look
+                        break
+                i = _find_brace_end(lines, sig_end) + 1
+                continue
             name = m.group(1)
             sig_end = i
             for look in range(i, min(i + 10, len(lines))):
