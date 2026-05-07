@@ -62,21 +62,21 @@ Quickly scan the codebase structure and **immediately** write `fm_agent/phases.j
 
 **Field rules:**
 
-- `project` — name of the repo root
+- `project` — basename of `proj_dir` (the directory passed to `main.py`)
 - `languages` — list of canonical lowercase language identifiers used in the project (e.g. `["cpp", "python"]`). For single-language projects, use a one-element list.
 - `file_extensions` — list of file extensions without leading dot, one per language (e.g. `["cpp", "py"]`). Order should match `languages`.
 - `phases[*].phase` — 1-indexed integer, unique, ascending
 - `phases[*].name` — brief label
 - `phases[*].description` — one sentence explaining what this phase does in the data pipeline
 - `phases[*].modules[*].name` — matches the subdirectory name of the module
-- `phases[*].modules[*].source_files` — relative paths from repo root of all source files that belong to this module. **Exclude all test files** (e.g., files in `test/`, `tests/`, `__tests__/` directories, or files named `*_test.*`, `test_*.*`, `*_spec.*`)
+- `phases[*].modules[*].source_files` — paths relative to `proj_dir` (your working directory). **Not relative to the repository root** — if `proj_dir` is a sub-directory of a larger repo, use `src/lib.rs`, not `form_urlencoded/src/lib.rs`. **Exclude all test files** (e.g., files in `test/`, `tests/`, `__tests__/` directories, or files named `*_test.*`, `test_*.*`, `*_spec.*`)
 - `phases[*].depends_on_phases` — list of phase numbers whose outputs this phase consumes (empty list for phases with no dependencies)
 
 Each source file must belong to **at most one phase**. If the same file appears in more than one phase's `modules[*].source_files`, the `phases.json` is invalid and must be corrected before proceeding.
 
 Each phase must be **self-contained**: all source files for a module in that phase must be listed explicitly. No phase may silently depend on files listed in another phase's modules.
 
-**Implementation tip:** Use a glob or `find` command to list source files per directory. Do not enumerate files by hand. Filter out test files (`test/`, `tests/`, `__tests__/`, `*_test.*`, `test_*.*`, `*_spec.*`). Write `fm_agent/phases.json` immediately after listing files — do not delay.
+**Implementation tip:** Use a glob or `find` command to list source files, starting from `proj_dir`. Do not enumerate files by hand. All paths must be relative to `proj_dir`. Filter out test files (`test/`, `tests/`, `__tests__/`, `*_test.*`, `test_*.*`, `*_spec.*`). Write `fm_agent/phases.json` immediately after listing files — do not delay.
 
 **IMPORTANT: After writing `fm_agent/phases.json`, proceed to Step 2 immediately. Do not revisit or refactor Step 1.**
 

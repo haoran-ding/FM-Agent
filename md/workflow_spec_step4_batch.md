@@ -25,7 +25,7 @@ Replace `<comment>` with the single-line comment prefix for the source language 
 
 ```
 <comment> [SPEC]
-<comment> Unit: <file path relative to repo root>
+<comment> Unit: <file path relative to proj_dir>
 <comment>
 <comment> <FunctionName>(<params>) -> <ReturnType>
 <comment>

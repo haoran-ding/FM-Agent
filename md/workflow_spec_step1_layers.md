@@ -56,12 +56,12 @@ The following should already exist:
 
 **Field rules:**
 
-- `project` — name of the repo root
+- `project` — basename of `proj_dir` (the directory passed to `main.py`)
 - `languages` — list of canonical lowercase language identifiers used in the project
 - `file_extensions` — list of file extensions without leading dot, one per language
 - `phases[*].phase` — 1-indexed integer, unique, ascending
 - `phases[*].modules[*].name` — matches the subdirectory name of the module
-- `phases[*].modules[*].source_files` — relative paths from repo root of all source files that belong to this module
+- `phases[*].modules[*].source_files` — paths relative to `proj_dir` (not the repository root)
 - `phases[*].depends_on_phases` — list of phase numbers whose outputs this phase consumes
 
 ---
