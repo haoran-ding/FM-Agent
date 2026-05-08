@@ -1,4 +1,4 @@
-from config import OPENCODE_MAX_RETRIES, LLM_MODEL
+from config import OPENCODE_MAX_RETRIES, OPENCODE_SETUP_MODEL, OPENCODE_SPEC_MODEL
 from src.file_utils import collect_file_names, is_file_ready
 from src.verification import streaming_reasoner
 from src.extract import run_extraction, EXT_TO_LANG
@@ -126,7 +126,7 @@ def _get_pending_batches(batches, proj_dir):
 
 
 def _run_opencode_step(proj_dir, work_dir, script_dir, log_file,
-                       md_name, expected_file, stage_label):
+                       md_name, expected_file, stage_label, model):
     """Run a single opencode session for a workflow step markdown file.
 
     Copies the md file to work_dir, runs opencode against it, and retries
@@ -147,7 +147,7 @@ def _run_opencode_step(proj_dir, work_dir, script_dir, log_file,
                       f"Check what has already been done and only complete the remaining steps. {fm_reminder}")
         try:
             subprocess.run(
-                ["opencode", "run", "--model", f"openrouter/{LLM_MODEL}",
+                ["opencode", "run", "--model", f"openrouter/{model}",
                  "--file", f"fm_agent/{md_name}", "--", prompt],
                 cwd=proj_dir, check=True, stdout=log_file, stderr=log_file,
             )
@@ -244,7 +244,7 @@ def run_pipeline(proj_dir):
             prompt = ("Continue where you left off. The previous run was interrupted by a network error. "
                       f"Check what has already been done and only complete the remaining steps. {fm_reminder}")
         try:
-            subprocess.run(["opencode", "run", "--model", f"openrouter/{LLM_MODEL}", "--file", "fm_agent/workflow_setup_extract.md", "--", prompt], cwd=proj_dir, check=True, stdout=log_file, stderr=log_file)
+            subprocess.run(["opencode", "run", "--model", f"openrouter/{OPENCODE_SETUP_MODEL}", "--file", "fm_agent/workflow_setup_extract.md", "--", prompt], cwd=proj_dir, check=True, stdout=log_file, stderr=log_file)
         except subprocess.CalledProcessError as e:
             logging.warning(f"Stage 2 attempt {attempt}: opencode exited with code {e.returncode}")
 
@@ -407,7 +407,7 @@ def run_pipeline(proj_dir):
                             f"Read fm_agent/spec_prompts/system_prompt.md for the format rules. {fm_reminder}"
                         )
                     proc = subprocess.Popen(
-                        ["opencode", "run", "--model", f"openrouter/{LLM_MODEL}",
+                        ["opencode", "run", "--model", f"openrouter/{OPENCODE_SPEC_MODEL}",
                          "--file", "fm_agent/workflow_spec_step4_batch.md",
                          "--", prompt],
                         cwd=proj_dir, stdout=log_file, stderr=log_file,

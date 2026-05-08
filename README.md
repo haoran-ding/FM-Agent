@@ -68,7 +68,12 @@ Key parameters can be adjusted in [config.py](config.py).
 
 | Parameter | Default | Description |
 |---|---|---|
-| `LLM_MODEL` | `anthropic/claude-sonnet-4.6` | LLM model used via OpenRouter |
+| `LLM_MODEL` | `anthropic/claude-sonnet-4.6` | Default model used as the fallback for all task-specific model settings |
+| `OPENCODE_SETUP_MODEL` | `LLM_MODEL` | Model used by OpenCode for codebase understanding, phase planning, and domain context generation |
+| `OPENCODE_SPEC_MODEL` | `LLM_MODEL` | Model used by OpenCode for batch behavioral spec generation |
+| `OPENCODE_BUG_VALIDATION_MODEL` | `LLM_MODEL` | Model used by OpenCode to validate `MISMATCH` results with probe scripts and bug reports |
+| `REASONER_POST_CONDITION_MODEL` | `LLM_MODEL` | Model used by direct llm calls to generate block post-conditions |
+| `REASONER_SPEC_CHECK_MODEL` | `LLM_MODEL` | Model used by direct llm calls to check whether actual post-conditions violate specs |
 | `LLM_OPENROUTER_API_KEY` | (env) | OpenRouter API key (read via `os.environ.get("OPENROUTER_API_KEY")`) |
 | `LLM_OPENROUTER_API_BASE_URL` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
 
