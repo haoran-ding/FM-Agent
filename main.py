@@ -233,6 +233,19 @@ def run_pipeline(proj_dir):
     workflow_src = os.path.join(script_dir, "md", "workflow_setup_extract.md")
     workflow_dst = os.path.join(work_dir, "workflow_setup_extract.md")
     shutil.copy2(workflow_src, workflow_dst)
+    _proj_dir_abs = os.path.abspath(proj_dir)
+    _proj_dir_name = os.path.basename(_proj_dir_abs)
+    with open(workflow_dst, "r") as _f:
+        _md = _f.read()
+    _old = ("- `phases[*].modules[*].source_files` — relative paths from repo root of all source files "
+            "that belong to this module.")
+    _new = (f"- `phases[*].modules[*].source_files` — relative paths from the project root "
+            f"`{_proj_dir_abs}` of all source files that belong to this module. "
+            f"For example, a file at `{_proj_dir_abs}/path/to/file.ext` must be recorded as "
+            f"`path/to/file.ext`, NOT as `{_proj_dir_name}/path/to/file.ext`.")
+    _md = _md.replace(_old, _new, 1)
+    with open(workflow_dst, "w") as _f:
+        _f.write(_md)
     fm_reminder = ("IMPORTANT: The fm_agent/ directory is NOT part of the project source code. "
                     "It is a workspace for storing your output files only. "
                     "Do NOT include fm_agent/ paths in phases.json. "
