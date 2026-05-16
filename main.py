@@ -148,7 +148,7 @@ def _run_opencode_step(proj_dir, work_dir, script_dir, log_file,
         try:
             subprocess.run(
                 ["opencode", "run", "--model", f"openrouter/{LLM_MODEL}",
-                 "--file", f"fm_agent/{md_name}", "--", prompt],
+                 "--file", os.path.join(proj_dir, "fm_agent", md_name), "--", prompt],
                 cwd=proj_dir, check=True, stdout=log_file, stderr=log_file,
             )
         except subprocess.CalledProcessError as e:
@@ -257,7 +257,7 @@ def run_pipeline(proj_dir):
             prompt = ("Continue where you left off. The previous run was interrupted by a network error. "
                       f"Check what has already been done and only complete the remaining steps. {fm_reminder}")
         try:
-            subprocess.run(["opencode", "run", "--model", f"openrouter/{LLM_MODEL}", "--file", "fm_agent/workflow_setup_extract.md", "--", prompt], cwd=proj_dir, check=True, stdout=log_file, stderr=log_file)
+            subprocess.run(["opencode", "run", "--model", f"openrouter/{LLM_MODEL}", "--file", os.path.join(proj_dir, "fm_agent", "workflow_setup_extract.md"), "--", prompt], cwd=proj_dir, check=True, stdout=log_file, stderr=log_file)
         except subprocess.CalledProcessError as e:
             logging.warning(f"Stage 2 attempt {attempt}: opencode exited with code {e.returncode}")
 
@@ -421,7 +421,7 @@ def run_pipeline(proj_dir):
                         )
                     proc = subprocess.Popen(
                         ["opencode", "run", "--model", f"openrouter/{LLM_MODEL}",
-                         "--file", "fm_agent/workflow_spec_step4_batch.md",
+                         "--file", os.path.join(proj_dir, "fm_agent", "workflow_spec_step4_batch.md"),
                          "--", prompt],
                         cwd=proj_dir, stdout=log_file, stderr=log_file,
                     )
