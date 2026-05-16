@@ -319,7 +319,7 @@ def _validate_single_bug(result_json_rel, proj_dir, work_dir=None):
         with open(log_path, "a") as log_file:
             subprocess.run(
                 ["opencode", "run", "--model", f"openrouter/{OPENCODE_BUG_VALIDATION_MODEL}",
-                 "--file", prompt_filename,
+                 "--file", prompt_path,
                  "--", "Follow the instructions in the attached file"],
                 cwd=proj_dir, check=True,
                 stdout=log_file, stderr=log_file,

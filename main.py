@@ -148,7 +148,7 @@ def _run_opencode_step(proj_dir, work_dir, script_dir, log_file,
         try:
             subprocess.run(
                 ["opencode", "run", "--model", f"openrouter/{model}",
-                 "--file", f"fm_agent/{md_name}", "--", prompt],
+                 "--file", os.path.join(proj_dir, "fm_agent", md_name), "--", prompt],
                 cwd=proj_dir, check=True, stdout=log_file, stderr=log_file,
             )
         except subprocess.CalledProcessError as e:
@@ -233,6 +233,19 @@ def run_pipeline(proj_dir):
     workflow_src = os.path.join(script_dir, "md", "workflow_setup_extract.md")
     workflow_dst = os.path.join(work_dir, "workflow_setup_extract.md")
     shutil.copy2(workflow_src, workflow_dst)
+    _proj_dir_abs = os.path.abspath(proj_dir)
+    _proj_dir_name = os.path.basename(_proj_dir_abs)
+    with open(workflow_dst, "r") as _f:
+        _md = _f.read()
+    _old = ("- `phases[*].modules[*].source_files` — relative paths from repo root of all source files "
+            "that belong to this module.")
+    _new = (f"- `phases[*].modules[*].source_files` — relative paths from the project root "
+            f"`{_proj_dir_abs}` of all source files that belong to this module. "
+            f"For example, a file at `{_proj_dir_abs}/path/to/file.ext` must be recorded as "
+            f"`path/to/file.ext`, NOT as `{_proj_dir_name}/path/to/file.ext`.")
+    _md = _md.replace(_old, _new, 1)
+    with open(workflow_dst, "w") as _f:
+        _f.write(_md)
     fm_reminder = ("IMPORTANT: The fm_agent/ directory is NOT part of the project source code. "
                     "It is a workspace for storing your output files only. "
                     "Do NOT include fm_agent/ paths in phases.json. "
@@ -244,7 +257,7 @@ def run_pipeline(proj_dir):
             prompt = ("Continue where you left off. The previous run was interrupted by a network error. "
                       f"Check what has already been done and only complete the remaining steps. {fm_reminder}")
         try:
-            subprocess.run(["opencode", "run", "--model", f"openrouter/{OPENCODE_SETUP_MODEL}", "--file", "fm_agent/workflow_setup_extract.md", "--", prompt], cwd=proj_dir, check=True, stdout=log_file, stderr=log_file)
+            subprocess.run(["opencode", "run", "--model", f"openrouter/{OPENCODE_SETUP_MODEL}", "--file", os.path.join(proj_dir, "fm_agent", "workflow_setup_extract.md"), "--", prompt], cwd=proj_dir, check=True, stdout=log_file, stderr=log_file)
         except subprocess.CalledProcessError as e:
             logging.warning(f"Stage 2 attempt {attempt}: opencode exited with code {e.returncode}")
 
@@ -408,7 +421,7 @@ def run_pipeline(proj_dir):
                         )
                     proc = subprocess.Popen(
                         ["opencode", "run", "--model", f"openrouter/{OPENCODE_SPEC_MODEL}",
-                         "--file", "fm_agent/workflow_spec_step4_batch.md",
+                         "--file", os.path.join(proj_dir, "fm_agent", "workflow_spec_step4_batch.md"),
                          "--", prompt],
                         cwd=proj_dir, stdout=log_file, stderr=log_file,
                     )
