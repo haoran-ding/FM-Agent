@@ -21,7 +21,7 @@ def _generate_block_post_condition(block, pre_condition, knowledge, language):
             "Generate the post-condition. Wrap it within [POST_START] and [POST_END]."
         )}
     ]
-    return _llm_call(_openrouter_client, LLM_MODEL, messages, "POST_START", "POST_END")
+    return _llm_call(_openrouter_client, REASONER_POST_CONDITION_MODEL, messages, "POST_START", "POST_END")
 
 
 _LANGUAGE_EXPERTISE = {
@@ -166,7 +166,7 @@ def _check_post_implies_spec(block, post_condition, spec_post_condition, knowled
         )}
     ]
     for _ in range(MAX_SPC_ITER):
-        response = _retry_create(_openrouter_client, LLM_MODEL, messages)
+        response = _retry_create(_openrouter_client, REASONER_SPEC_CHECK_MODEL, messages)
         check = _extract_tagged(response, "CHECK_START", "CHECK_END")
         if check:
             if "yes" in check.lower():

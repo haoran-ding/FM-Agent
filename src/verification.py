@@ -1,4 +1,4 @@
-from config import MAX_WORKERS, LLM_MODEL
+from config import MAX_WORKERS, OPENCODE_BUG_VALIDATION_MODEL
 from .parser import parse_input_function
 from .reasoner import reasoner, _parse_spec_conditions, _sanitize_strings
 from .file_utils import is_file_ready
@@ -318,7 +318,7 @@ def _validate_single_bug(result_json_rel, proj_dir, work_dir=None):
     try:
         with open(log_path, "a") as log_file:
             subprocess.run(
-                ["opencode", "run", "--model", f"openrouter/{LLM_MODEL}",
+                ["opencode", "run", "--model", f"openrouter/{OPENCODE_BUG_VALIDATION_MODEL}",
                  "--file", prompt_path,
                  "--", "Follow the instructions in the attached file"],
                 cwd=proj_dir, check=True,
